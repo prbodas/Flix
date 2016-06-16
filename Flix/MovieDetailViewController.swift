@@ -23,14 +23,19 @@ class MovieDetailViewController: UIViewController {
         
         setBackgroundView()
         
+        let releaseDate = movie.valueForKeyPath("release_date") as! String
+        let releaseYear = releaseDate.substringWithRange(Range<String.Index>(start: releaseDate.startIndex, end: releaseDate.startIndex.advancedBy(4)))
+        
         let title = movie.valueForKeyPath("title") as! String
         self.title = title
-        titleLabel.text = title
+        titleLabel.text = title + " (" + releaseYear + ")"
         
         
         let overview = movie["overview"] as! String
         let rating = movie["vote_average"] as! Double
         let rString = String(format: "%.2f/10", rating)
+        
+        
         contentLabel.text = overview + "\n\nRating: " + rString
         contentLabel.editable = false
         
