@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AFNetworking
 
 class MovieViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
@@ -24,12 +25,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         
         //get JSON data
         
-        let apiKey = "1fca7ad4dd68a23fc671ba6deda8d707"
-        let url = NSURL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
-        let request = NSURLRequest(
-            URL: url!,
-            cachePolicy: NSURLRequestCachePolicy.ReloadIgnoringLocalCacheData,
-            timeoutInterval: 10)
+        let request = getRequest()
         
         let session = NSURLSession(
             configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
@@ -51,12 +47,61 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
                     }
         })
         task.resume()
+        
+        //set up pull to refresh
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), forControlEvents: UIControlEvents.ValueChanged)
+        tableView.insertSubview(refreshControl, atIndex: 0)
 
+
+        
+
+    }
+    
+    func getRequest() -> NSURLRequest
+    {
+        let apiKey = "1fca7ad4dd68a23fc671ba6deda8d707"
+        let url = NSURL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
+        let request = NSURLRequest(
+            URL: url!,
+            cachePolicy: NSURLRequestCachePolicy.ReloadIgnoringLocalCacheData,
+            timeoutInterval: 10)
+        return request
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    //refresh control methods
+    
+    // Makes a network request to get updated data
+    // Updates the tableView with the new data
+    // Hides the RefreshControl
+    func refreshControlAction(refreshControl: UIRefreshControl) {
+        
+        // ... Create the NSURLRequest (myRequest) ...
+        
+        // Configure session so that completion handler is executed on main UI thread
+        let session = NSURLSession(
+            configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
+            delegate:nil,
+            delegateQueue:NSOperationQueue.mainQueue()
+        )
+        
+        let task : NSURLSessionDataTask = session.dataTaskWithRequest(getRequest(),
+                                                                      completionHandler: { (data, response, error) in
+                                                                        
+                                                                        // ... Use the new data to update the data source ...
+                                                                        
+                                                                        // Reload the tableView now that there is new data
+                                                                        self.tableView.reloadData()
+                                                                        
+                                                                        // Tell the refreshControl to stop spinning
+                                                                        refreshControl.endRefreshing()
+        });
+        task.resume()
     }
     
 
@@ -75,10 +120,20 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
     func tableView(tableView: UITableView,
                      cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell
     {
-        let cell = tableView.dequeueReusableCellWithIdentifier("MovieCell",forIndexPath: indexPath)
+        let cell = tableView.dequeueReusableCellWithIdentifier("MovieCell",forIndexPath: indexPath) as! MovieCell
+        
         let movie = movies![indexPath.row]
         let title = movie["title"] as! String
-        cell.textLabel!.text = title
+        let overview = movie["overview"] as! String
+        
+        //get poster
+        var strUrl = movie["poster_path"] as! String
+        strUrl = "http://image.tmdb.org/t/p/w500" + strUrl
+        let imageUrl = NSURL(string: strUrl)
+        
+        cell.titleLabel!.text = title
+        cell.overviewLabel!.text = overview
+        cell.posterView.setImageWithURL(imageUrl!)//, placeholderImage: UIImage(named: "MovieReel"))
         return cell
         
     }
