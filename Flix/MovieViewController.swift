@@ -8,6 +8,7 @@
 
 import UIKit
 import AFNetworking
+import MBProgressHUD
 
 class MovieViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
@@ -19,13 +20,16 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
         
         //get JSON data
         
+        
         let request = getRequest()
+        MBProgressHUD.showHUDAddedTo(self.view, animated: true)
         
         let session = NSURLSession(
             configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
@@ -42,6 +46,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
                                 self.movies = responseDictionary["results"] as! [NSDictionary]
                                 self.tableView.reloadData()
                                 print ("count: \(self.movies!.count)")
+                                MBProgressHUD.hideHUDForView(self.view, animated: true)
                                                                                 
                                             }
                     }

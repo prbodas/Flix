@@ -13,6 +13,7 @@ class MovieCell: UITableViewCell {
     @IBOutlet weak var posterView: UIImageView!
     @IBOutlet weak var overviewLabel: UILabel!
     @IBOutlet weak var titleLabel: UILabel!
+    
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
@@ -22,6 +23,8 @@ class MovieCell: UITableViewCell {
         super.setSelected(selected, animated: animated)
 
         // Configure the view for the selected state
+        print ("hello");
+        
     }
 
 }
