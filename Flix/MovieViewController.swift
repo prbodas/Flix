@@ -153,6 +153,13 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
             return self.movies!.count
         }
     }
+    
+    //segue to detail screen code
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        let destination = segue.destinationViewController as! MovieDetailViewController
+        let indexPath = tableView.indexPathForCell(sender as! MovieCell)
+        destination.movie = movies![indexPath!.row]
+    }
 
 
 }
