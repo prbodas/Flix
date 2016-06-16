@@ -12,6 +12,7 @@ import MBProgressHUD
 
 class MovieViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
+    @IBOutlet weak var networkErrorView: UILabel!
    
     @IBOutlet weak var tableView: UITableView!
     
@@ -24,6 +25,9 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
+        
+        //set network error view to invisible
+        networkErrorView.hidden = true;
         
         //get JSON data
         
@@ -47,8 +51,13 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
                                 self.tableView.reloadData()
                                 print ("count: \(self.movies!.count)")
                                 MBProgressHUD.hideHUDForView(self.view, animated: true)
+                                self.networkErrorView.hidden = true;
                                                                                 
-                                            }
+                            }
+                    }else
+                    {
+                        self.networkErrorView.hidden = false;
+                        
                     }
         })
         task.resume()
@@ -96,15 +105,31 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         )
         
         let task : NSURLSessionDataTask = session.dataTaskWithRequest(getRequest(),
-                                                                      completionHandler: { (data, response, error) in
+                        completionHandler: { (dataOrNil, response, error) in
                                                                         
-                                                                        // ... Use the new data to update the data source ...
+                            if let data = dataOrNil {
+                                if let responseDictionary = try! NSJSONSerialization.JSONObjectWithData(data, options:[]) as? NSDictionary {
+                                    
+                                    //print("response: \(responseDictionary["results"])")
+                                    self.movies = responseDictionary["results"] as! [NSDictionary]
+                                    self.tableView.reloadData()
+                                    print ("count: \(self.movies!.count)")
+                                    //MBProgressHUD.hideHUDForView(self.view, animated: true)
+                                    self.networkErrorView.hidden = true;
+                                    
+                                }
+                            }else
+                            {
+                                self.networkErrorView.hidden = false;
+                                
+                            }
+
                                                                         
-                                                                        // Reload the tableView now that there is new data
-                                                                        self.tableView.reloadData()
+                            // Reload the tableView now that there is new data
+                            self.tableView.reloadData()
                                                                         
-                                                                        // Tell the refreshControl to stop spinning
-                                                                        refreshControl.endRefreshing()
+                            // Tell the refreshControl to stop spinning
+                            refreshControl.endRefreshing()
         });
         task.resume()
     }

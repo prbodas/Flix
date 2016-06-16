@@ -69,11 +69,20 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Network Error" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="hxx-8n-bHL">
+                                <rect key="frame" x="0.0" y="65" width="320" height="21"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.60393488219895286" green="0.0054544563610529504" blue="0.0019420133462731532" alpha="1" colorSpace="calibratedRGB"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="13"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <navigationItem key="navigationItem" title="FLIX" id="dTl-T2-0i9"/>
                     <connections>
+                        <outlet property="networkErrorView" destination="hxx-8n-bHL" id="2bp-PI-2KY"/>
                         <outlet property="tableView" destination="Qyw-Ch-O0R" id="XxZ-oC-36v"/>
                     </connections>
                 </viewController>
