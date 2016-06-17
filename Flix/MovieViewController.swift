@@ -10,11 +10,17 @@ import UIKit
 import AFNetworking
 import MBProgressHUD
 
-class MovieViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MovieViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+    
+    @IBOutlet weak var tapView: UIView!
+    
+    @IBOutlet weak var searchForMovie: UISearchBar!
     
     @IBOutlet weak var networkErrorView: UILabel!
    
     @IBOutlet weak var tableView: UITableView!
+    
+    var textInSearchBar = ""
     
     var movies: [NSDictionary]?
 
@@ -25,6 +31,10 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         // Do any additional setup after loading the view.
         tableView.dataSource = self
         tableView.delegate = self
+        searchForMovie.delegate = self
+        
+        //meant to close the keyboard
+        tapView.hidden = true
         
         //set network error view to invisible
         networkErrorView.hidden = true;
@@ -72,6 +82,7 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
 
     }
     
+    //gets standard "now playing" api request
     func getRequest() -> NSURLRequest
     {
         let apiKey = "1fca7ad4dd68a23fc671ba6deda8d707"
@@ -81,6 +92,42 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
             cachePolicy: NSURLRequestCachePolicy.ReloadIgnoringLocalCacheData,
             timeoutInterval: 10)
         return request
+    }
+    
+    //standard run /w network error of some request
+    func callRequest(request:NSURLRequest)
+    {
+        let session = NSURLSession(
+            configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
+            delegate: nil,
+            delegateQueue: NSOperationQueue.mainQueue()
+        )
+        
+        let task: NSURLSessionDataTask = session.dataTaskWithRequest(request,
+                completionHandler: { (dataOrNil, response, error) in
+                    if let data = dataOrNil {
+                        if let responseDictionary = try! NSJSONSerialization.JSONObjectWithData(data, options:[]) as? NSDictionary {
+                                                                                
+                                print("response: \(responseDictionary["results"])")
+                                if (responseDictionary["results"] == nil){
+                                    self.movies = []
+                                }else{
+                                    self.movies = responseDictionary["results"] as! [NSDictionary]
+                                }
+                                                                                
+                                self.tableView.reloadData()
+                                print ("count: \(self.movies!.count)")
+                                MBProgressHUD.hideHUDForView(self.view, animated: true)
+                                self.networkErrorView.hidden = true;
+                                                                                
+                            }
+                        }else{
+                            self.networkErrorView.hidden = false;
+                                                                            
+                        }
+        })
+        task.resume()
+
     }
 
     override func didReceiveMemoryWarning() {
@@ -156,14 +203,21 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         let title = movie["title"] as! String
         let overview = movie["overview"] as! String
         
+        print(movie)
+        
         //get poster
-        var strUrl = movie["poster_path"] as! String
-        strUrl = "http://image.tmdb.org/t/p/w500" + strUrl
-        let imageUrl = NSURL(string: strUrl)
+        let posterPath = movie["poster_path"]
+        if let posterPath = posterPath as? NSNull{
+            cell.posterView.image = UIImage(named: "ImageNotAvailable")
+        }else{
+            var strUrl = posterPath as! String
+            strUrl = "http://image.tmdb.org/t/p/w500" + strUrl
+            let imageUrl = NSURL(string: strUrl)
+            cell.posterView.setImageWithURL(imageUrl!)//, placeholderImage: UIImage(named: "MovieReel"))
+        }
         
         cell.titleLabel!.text = title
         cell.overviewLabel!.text = overview
-        cell.posterView.setImageWithURL(imageUrl!)//, placeholderImage: UIImage(named: "MovieReel"))
         return cell
         
     }
@@ -185,6 +239,85 @@ class MovieViewController: UIViewController, UITableViewDataSource, UITableViewD
         let indexPath = tableView.indexPathForCell(sender as! MovieCell)
         destination.movie = movies![indexPath!.row]
     }
+    
+    //search bar delegate methods
+    
+    func searchBar(_ searchBar: UISearchBar,
+                     textDidChange searchText: String)
+    {
+        textInSearchBar = searchText
+        print(textInSearchBar)
+        //searchForMovie.endEditing(true)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar)
+    {
+        searchForMovie.endEditing(true)
+        callRequest(getRequest())
+    }
+    
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar)
+    {
+        textInSearchBar = textInSearchBar.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+        textInSearchBar = textInSearchBar.stringByReplacingOccurrencesOfString(" ", withString: "\\%20")
+        
+        var urlString = "http://api.themoviedb.org/3/search/movie?query=" + textInSearchBar + "&api_key=1fca7ad4dd68a23fc671ba6deda8d707"
+        urlString = urlString.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
+        print (urlString)
+        let url = NSURL(string: urlString)
+        print(url)
+        var request = NSURLRequest(
+            URL: url!,
+            cachePolicy: NSURLRequestCachePolicy.ReloadIgnoringLocalCacheData,
+            timeoutInterval: 10)
+        if (textInSearchBar == "")
+        {
+            request = getRequest();
+        }
+        
+        let session = NSURLSession(
+            configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
+            delegate: nil,
+            delegateQueue: NSOperationQueue.mainQueue()
+        )
+        
+        let task: NSURLSessionDataTask = session.dataTaskWithRequest(request,
+            completionHandler: { (dataOrNil, response, error) in
+                    if let data = dataOrNil {
+                        if let responseDictionary = try! NSJSONSerialization.JSONObjectWithData(data, options:[]) as? NSDictionary {
+                                                                                
+                                print("response: \(responseDictionary["results"])")
+                                if (responseDictionary["results"] == nil)
+                                {
+                                    self.movies = []
+                                }else{
+                                    self.movies = responseDictionary["results"] as! [NSDictionary]
+                                }
+                            
+                                self.tableView.reloadData()
+                                print ("count: \(self.movies!.count)")
+                                MBProgressHUD.hideHUDForView(self.view, animated: true)
+                                self.networkErrorView.hidden = true;
+                                                                                
+                            }
+                        }else
+                        {
+                            self.networkErrorView.hidden = false;
+                                                                            
+                        }
+        })
+        task.resume()
 
-
+        
+    }
+    
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar){
+        tapView.hidden = false
+    }
+    
+    @IBAction func tapView(sender: AnyObject) {
+        searchForMovie.endEditing(true)
+        tapView.hidden = true;
+    }
+    
 }

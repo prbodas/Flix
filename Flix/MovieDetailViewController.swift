@@ -46,11 +46,19 @@ class MovieDetailViewController: UIViewController {
     
     func setBackgroundView()
     {
+        
+        let posterPath = movie["backdrop_path"]
+        if let posterPath = posterPath as? NSNull{
+            backgroundImage.image = UIImage(named: "ImageNotAvailable")
+        }else{
+            var strUrl = movie["backdrop_path"] as! String
+            strUrl = "http://image.tmdb.org/t/p/w500" + strUrl
+            let imageUrl = NSURL(string: strUrl)
+            backgroundImage.setImageWithURL(imageUrl!)
+        }
+        
         //get poster
-        var strUrl = movie["backdrop_path"] as! String
-        strUrl = "http://image.tmdb.org/t/p/w500" + strUrl
-        let imageUrl = NSURL(string: strUrl)
-        backgroundImage.setImageWithURL(imageUrl!)
+        
         
     }
 
